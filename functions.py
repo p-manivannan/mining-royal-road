@@ -1,4 +1,17 @@
+import regex as re
 
+'''
+
+'''
+def bs_preprocess(html):
+    """remove distracting whitespaces and newline characters"""
+    pat = re.compile('(^[\s]+)|([\s]+$)', re.MULTILINE)
+    html = re.sub(pat, '', html)       # remove leading and trailing whitespaces
+    html = re.sub('\n', ' ', html)     # convert newlines to spaces
+                                    # this preserves newline delimiters
+    html = re.sub('[\s]+<', '<', html) # remove whitespaces before opening tags
+    html = re.sub('>[\s]+', '>', html) # remove whitespaces after closing tags
+    return html 
 
 '''
 returns title, author. Strips whitespace before returning
@@ -29,6 +42,22 @@ def get_stats(soup):
         stats[key] = stat_values[idx]
 
     return stats
+    
+'''
+Gets genres
+'''
+def get_genres(soup):
+    genres = []
+    status1 = soup.find('span', 'label label-default label-sm bg-blue-hoki')
+    status2 = status1.find_next('span', 'label label-default label-sm bg-blue-hoki')
+    tags = soup.find('span', 'tags')
+    genres.extend([status1.text.strip().lower(), status2.text.strip().lower()])
+    for tag in tags:
+        text = tag.text.strip().replace(' ', '_').lower()
+        if text != '':
+            genres.append(text)
+    
+    return genres
     
             
 

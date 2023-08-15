@@ -10,9 +10,11 @@ from functions import *
 novel_link = 'https://www.royalroad.com/fiction/21220/mother-of-learning'
 
 page = requests.get(novel_link).text
+page = bs_preprocess(page)
 soup = BeautifulSoup(page, features='lxml')
 title, author = get_title_and_author(soup)
 statistics = get_stats(soup)
+genres = get_genres(soup)
 
 results = soup.find_all('div', class_='review-inner')
 novel_collection = {
@@ -21,7 +23,7 @@ novel_collection = {
                             'summary' : '',
                             'statistics' : statistics,
                             'reviews': {},
-                            'genres' : []
+                            'genres' : genres
                             }
                     }
 
