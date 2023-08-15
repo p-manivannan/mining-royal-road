@@ -11,6 +11,7 @@ TO-DO:
 1. Get summary
 2. Get ALL reviews
 3. Convert novel_collection to pandas dataframe
+4. Implement search function for novels
 '''
 
 novel_link = 'https://www.royalroad.com/fiction/21220/mother-of-learning'
@@ -21,8 +22,8 @@ soup = BeautifulSoup(page, features='lxml')
 title, author = get_title_and_author(soup)
 statistics = get_stats(soup)
 genres = get_genres(soup)
+reviews = get_reviews(soup, novel_link)
 
-results = soup.find_all('div', class_='review-inner')
 novel_collection = {
                     title : {
                             'author' : author,
@@ -33,7 +34,7 @@ novel_collection = {
                             }
                     }
 
-print(novel_collection)
+# print(novel_collection)
 
 # Getting all reviews
 
