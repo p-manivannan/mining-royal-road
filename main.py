@@ -1,35 +1,53 @@
-from selenium import webdriver
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-from webdriver_manager.chrome import ChromeDriverManager
-import time
+from functions import *
+# import spacy 
 
-# Download the correct chromedriver (if using chrome. For other browsers, use relevant driver) and place in path
-# driver = webdriver.Chrome(r"C:\Users\pithw\Desktop\University\1_PERSONAL PROJECTS\chromedriver")
+# nlp = spacy.load("en_core_web_lg")
+
 
 novel_link = 'https://www.royalroad.com/fiction/21220/mother-of-learning'
 
-# driver.get(novel_link)
-# for review_element in driver.find_elements_by_class_name("review-inner"):
-#     print(review_element)
-
 page = requests.get(novel_link).text
 soup = BeautifulSoup(page, features='lxml')
+title, author = get_title_and_author(soup)
+statistics = get_stats(soup)
+
 results = soup.find_all('div', class_='review-inner')
-reviews = {}
-reviews['review'] = []
+novel_collection = {
+                    title : {
+                            'author' : author,
+                            'summary' : '',
+                            'statistics' : statistics,
+                            'reviews': {},
+                            'genres' : []
+                            }
+                    }
 
-for i in results:
-    reviews['review'].append(i.text)
+print(novel_collection)
+# # Objective 1: Put reviews in a pandas dataframe
+# # Objective 2: Pre-process text
+# # Objective 3: Get ALL reviews, not just the ones on the first page
 
 
+
+# for i in results:
+#     reviews.append(i.text)
+
+# print(reviews)
 
 
 '''
-BeautifulSoup can't access reviews just be getting the driver 
-page source without modifications.
+PIPELINE: 
+1. Get all reviews
+2. Put reviews in pandas dataframe
+3. Pre-process text
+4. Perform analysis (topic modelling/GPT/etc.)
+'''
 
+
+'''
 There's something in the review text in the html called '&nbsp;'.
 It most likely functions like <br> in the text
 '''
