@@ -8,10 +8,12 @@ from functions import *
 
 '''
 TO-DO:
-1. Get summary
-2. Get ALL reviews
-3. Convert novel_collection to pandas dataframe
-4. Implement search function for novels
+- Find best method of large dictionary storage: Database, pickle, csv, or shelve
+- Implement save/load of novel_collection object
+- Convert novel_collection to pandas dataframe
+- Pre-process review texts (maybe during retrieval?)
+- Perform the analysis
+- Implement search function for novels
 '''
 
 novel_link = 'https://www.royalroad.com/fiction/21220/mother-of-learning'
@@ -19,7 +21,7 @@ novel_link = 'https://www.royalroad.com/fiction/21220/mother-of-learning'
 page = requests.get(novel_link).text
 page = bs_preprocess(page)
 soup = BeautifulSoup(page, features='lxml')
-title, author = get_title_and_author(soup)
+title, author, summary = get_title_author_summary(soup)
 statistics = get_stats(soup)
 genres = get_genres(soup)
 reviews = get_reviews(soup, novel_link)
@@ -27,14 +29,15 @@ reviews = get_reviews(soup, novel_link)
 novel_collection = {
                     title : {
                             'author' : author,
-                            'summary' : '',
+                            'summary' : summary,
                             'statistics' : statistics,
-                            'reviews': {},
+                            'reviews': reviews,
                             'genres' : genres
                             }
                     }
 
-# print(novel_collection)
+save(novel_collection, title.lower().replace(' ', '_'), save_flag.pickle)
+
 
 # Getting all reviews
 

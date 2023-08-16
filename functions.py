@@ -2,6 +2,12 @@ import regex as re
 import requests
 from bs4 import BeautifulSoup
 from pprint import pprint
+from enum import Enum
+import pickle
+
+class save_flag(Enum):
+    pickle = 1
+    csv = 2
 
 '''
 the following function was obtained from user svenwildermann on stackoverflow:
@@ -24,9 +30,12 @@ Assumptions:
 2. Format of the retrieved text is <title> by <author>
 '''
 
-def get_title_and_author(soup):
-    title_and_author_container = soup.find_all('div', class_='col')
-    return title_and_author_container[0].text.split('by')[0].strip(), title_and_author_container[0].text.split('by')[1].strip()
+def get_title_author_summary(soup):
+    title_and_author_container = soup.find('div', class_='col')
+    title = title_and_author_container.text.split('by')[0].strip()
+    author = title_and_author_container.text.split('by')[1].strip()
+    summary = soup.find('div', class_='hidden-content').text.strip()
+    return title, author, summary
 
 '''
 Returns a dict containing all relevant statistics in the fiction page
@@ -96,6 +105,17 @@ def get_reviews(soup, temp_url):
 
     return reviews
 
+
+def save(object, filename, flag):
+    if flag == save_flag.pickle:
+        with open(filename + '.pkl', 'wb') as file:
+            pickle.dump(object, file, pickle.HIGHEST_PROTOCOL)
+    elif flag == save_flag.csv:
+        print('NOT IMPLEMENTED')
+
+def load(object, filename, flag):
+
+        
 
 
 
