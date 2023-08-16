@@ -1,6 +1,7 @@
 import regex as re
 import requests
 from bs4 import BeautifulSoup
+from pprint import pprint
 
 '''
 the following function was obtained from user svenwildermann on stackoverflow:
@@ -68,34 +69,32 @@ def get_genres(soup):
 very slow T_T, gotta optimize...
 returns a list of dicts containing
 reviewers and their reviews
+Assumes URL is in form:
+https://royalroad.com/fiction/21220/mother-of-learning
 '''
 def get_reviews(soup, temp_url):
     m_url = temp_url + '?sorting=top&reviews='
+    # RETRIEVE NUMBER OF REVIEW PAGES
     ul = soup.find('ul', class_='pagination justify-content-center').find_all('li')
     a = ul[-1].find('a')
     n_pages = int(a.attrs['data-page'])
-    # Step 1: Create link text
-    # Step 2: Request link
-    # Step 3: Get reviews
-    # Step 4: Repeat for n_pages
-    # list of dictionaries {'author': 'name', 'review': 'blah blah'}
     reviews = []
 
-    # PROBLEM: This only gets one review per page.
-    for n in range(1, 2):
+    for n in range(1, n_pages):
         # CREATE LINK TEXT
         review_url = m_url + str(n)
         page = requests.get(review_url).text
         soup = BeautifulSoup(page, features='lxml')
-        elements = soup.find('div', class_='review')
-        # retrieve reviewer name
-        meta = elements.find('div', class_ = 'review-meta')
-        reviewer = meta.find_next('a').text.strip()
-        review = elements.find_next('div', class_='review-inner').text.strip()
-        reviews.append({'author' : reviewer, 'review' : review})
+        # FIND THE REVIEW CONTAINER
+        review_container = soup.find('div', class_='portlet light reviews')
+        # LOOP THROUGH ALL REVIEWS
+        for x in review_container.find_all('div', class_='review'):
+            meta = x.find('div', class_ = 'review-meta')
+            reviewer = meta.find_next('a').text.strip()
+            review = x.find_next('div', class_='review-inner').text.strip()
+            reviews.append({'author' : reviewer, 'review' : review})
 
-    print(reviews)
-    print("NUMBER OF REVIEWS:", len(reviews))
+    return reviews
 
 
 
