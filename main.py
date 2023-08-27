@@ -8,6 +8,7 @@ from functions import *
 
 '''
 TO-DO:
+- Add Star ratings to reviews
 - Find best method of large dictionary storage: Database, pickle, csv, or shelve:
         1. CSV for long-term storage and sharing
         2. Shelve/alternative for loading into application fast
