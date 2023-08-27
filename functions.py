@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 from pprint import pprint
 from enum import Enum
 import pickle
+import spacy 
+
+nlp = spacy.load("en_core_web_lg")
 
 class save_flag(Enum):
     pickle = 1
@@ -105,6 +108,21 @@ def get_reviews(soup, temp_url):
 
     return reviews
 
+def tokenizer(text):
+    return [token.lemma_.lower() for token in nlp(text) if not token.is_stop and not token.is_punct]
+
+def clean_reviews(reviews):
+    '''
+    1. Tokenize
+    2. Remove punctuation and stop words
+    3. Lemmatize
+    '''
+    item = reviews[1]
+    review = item['review']
+    review = review.replace('\n', '').replace('&nbsp', '')
+    review = tokenizer(review)
+    print(review)
+
 
 def save(object, filename, flag):
     if flag == save_flag.pickle:
@@ -113,7 +131,13 @@ def save(object, filename, flag):
     elif flag == save_flag.csv:
         print('NOT IMPLEMENTED')
 
-def load(object, filename, flag):
+def load(filename, flag):
+    if flag == save_flag.pickle:
+        with open(filename + '.pkl', 'rb') as file:
+            data = pickle.load(file)
+            return data
+    elif flag == save_flag.csv:
+        print("NOT IMPLEMENTED")
 
         
 

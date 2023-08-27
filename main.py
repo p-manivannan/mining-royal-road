@@ -8,7 +8,9 @@ from functions import *
 
 '''
 TO-DO:
-- Find best method of large dictionary storage: Database, pickle, csv, or shelve
+- Find best method of large dictionary storage: Database, pickle, csv, or shelve:
+        1. CSV for long-term storage and sharing
+        2. Shelve/alternative for loading into application fast
 - Implement save/load of novel_collection object
 - Convert novel_collection to pandas dataframe
 - Pre-process review texts (maybe during retrieval?)
@@ -24,19 +26,22 @@ soup = BeautifulSoup(page, features='lxml')
 title, author, summary = get_title_author_summary(soup)
 statistics = get_stats(soup)
 genres = get_genres(soup)
-reviews = get_reviews(soup, novel_link)
+reviews = load('raw_reviews', save_flag.pickle)
 
-novel_collection = {
-                    title : {
-                            'author' : author,
-                            'summary' : summary,
-                            'statistics' : statistics,
-                            'reviews': reviews,
-                            'genres' : genres
-                            }
-                    }
+clean_reviews(reviews)
 
-save(novel_collection, title.lower().replace(' ', '_'), save_flag.pickle)
+# novel_collection = {
+#                     title : {
+#                             'author' : author,
+#                             'summary' : summary,
+#                             'statistics' : statistics,
+#                             'reviews': reviews,
+#                             'genres' : genres
+#                             }
+#                     }
+                    
+
+# save(novel_collection, title.lower().replace(' ', '_'), save_flag.pickle)
 
 
 # Getting all reviews
@@ -47,7 +52,7 @@ PIPELINE:
 1. Get all reviews
 2. Put reviews in pandas dataframe
 3. Pre-process text
-4. Perform analysis (topic modelling/GPT/etc.)
+4. Perform analysis (topic modelling/GPT/etc.)0
 '''
 
 
