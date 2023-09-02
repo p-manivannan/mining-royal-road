@@ -2,9 +2,8 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from functions import *
-# import spacy 
-
-# nlp = spacy.load("en_core_web_lg")
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
 
 '''
 TO-DO:
@@ -12,9 +11,7 @@ TO-DO:
 - Find best method of large dictionary storage: Database, pickle, csv, or shelve:
         1. CSV for long-term storage and sharing
         2. Shelve/alternative for loading into application fast
-- Implement save/load of novel_collection object
 - Convert novel_collection to pandas dataframe
-- Pre-process review texts (maybe during retrieval?)
 - Perform the analysis
 - Implement search function for novels
 '''
@@ -30,6 +27,24 @@ genres = get_genres(soup)
 reviews = load('raw_reviews', save_flag.pickle)
 
 clean_reviews(reviews)
+
+# TF-IDF Vectorizer
+vect = TfidfVectorizer(max_features=1000)
+vect_text = vect.fit_transform(reviews)
+
+model = LatentDirichletAllocation(n_components=5, learning_method='online', random_state=42, max_iter=1)
+lda_top = model.fit_transform(vect_text)
+
+# Topic analysis
+vocab = vect.get_feature_names()
+for i, comp in enumerate(model.components_):
+    vocab_comp = zip(vocab, comp)
+    sorted_words = sorted(vocab_comp, lambda x:x[1], reverse=True)[:10]
+    print("Topic "+str(i)+": ")
+    for t in sorted_words:
+        print(t[0], end=" ")
+        print("n")
+
 
 # novel_collection = {
 #                     title : {

@@ -4,9 +4,15 @@ from bs4 import BeautifulSoup
 from pprint import pprint
 from enum import Enum
 import pickle
-import spacy 
+from string import punctuation
+import nltk
+from nltk.tokenize import RegexpTokenizer
+from nltk.stem import WordNetLemmatizer  
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-nlp = spacy.load("en_core_web_lg")
+
+stop_words = set(nltk.corpus.stopwords.words('english'))
+punctuation = list(punctuation)
 
 class save_flag(Enum):
     pickle = 1
@@ -108,20 +114,29 @@ def get_reviews(soup, temp_url):
 
     return reviews
 
+
+'''
+Tokenizes text, lemmatises, removes stop words and punctuation
+'''
 def tokenizer(text):
-    return [token.lemma_.lower() for token in nlp(text) if not token.is_stop and not token.is_punct]
+    l = WordNetLemmatizer()
+    words = nltk.word_tokenize(text)
+    tokens = [l.lemmatize(w) for w in words if w not in stop_words and w not in punctuation]
+    return tokens
 
 def clean_reviews(reviews):
     '''
-    1. Tokenize
+    1. Tokenize  
     2. Remove punctuation and stop words
     3. Lemmatize
     '''
-    item = reviews[1]
-    review = item['review']
-    review = review.replace('\n', '').replace('&nbsp', '')
-    review = tokenizer(review)
-    print(review)
+    for item in reviews:
+        review = item['review']
+        # Remove \n and &nbsp tags from text
+        review = review.replace('\n', '').replace('&nbsp', '')
+        # Lowercase
+        review = review.lower()
+        item['review'] = tokenizer(review)
 
 
 def save(object, filename, flag):
