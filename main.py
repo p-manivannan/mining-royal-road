@@ -11,13 +11,17 @@ from sklearn.decomposition import LatentDirichletAllocation
 
 '''
 TO-DO:
+- IMPLEMENT SAVING/LOADING OF DICT OF NOVELS
+        1. Maybe instead of loading the whole dict, you can load chunks of N elements.
+        2. If item is not in N elements, then load the next and check and so on.
+        3. Maybe research other faster data structures/schemes.
 - Add Star ratings to reviews
 - Find best method of large dictionary storage: Database, pickle, csv, or shelve:
         1. CSV for long-term storage and sharing
         2. Shelve/alternative for loading into application fast
 - Convert novel_collection to pandas dataframe
 - Perform the analysis
-- Implement search function for novels
+- Implement search function for novels          : DONE
 '''
 
 novel_link = 'https://www.royalroad.com/fiction/21220/mother-of-learning'
