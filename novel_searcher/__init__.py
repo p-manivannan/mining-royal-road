@@ -1,1 +1,2 @@
-from . import bruh
+from . import sitecrawler
+from . import novelcrawler

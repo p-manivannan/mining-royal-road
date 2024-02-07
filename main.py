@@ -7,8 +7,6 @@ import novel_searcher
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 
-
-
 '''
 TO-DO:
 - IMPLEMENT SAVING/LOADING OF DICT OF NOVELS
@@ -21,7 +19,6 @@ TO-DO:
         2. Shelve/alternative for loading into application fast
 - Convert novel_collection to pandas dataframe
 - Perform the analysis
-- Implement search function for novels          : DONE
 '''
 
 novel_link = 'https://www.royalroad.com/fiction/21220/mother-of-learning'
