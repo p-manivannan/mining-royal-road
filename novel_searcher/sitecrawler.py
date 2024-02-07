@@ -69,7 +69,7 @@ class SiteCrawler:
             return None
         novel_name = novel.text.strip()
         novel_link = novel.attrs['href']
-        return (novel_name, f'{self.get_royalroad_link() + novel_link}')
+        return novel_name, f'{self.get_royalroad_link() + novel_link}'
 
     '''
     Searches a novel by utilizing RoyalRoad's search function
@@ -96,13 +96,3 @@ class SiteCrawler:
                 return
             self.novel_info[novel_name] = novel.attrs['href']
         pass
-    
-obj = SiteCrawler()
-# author = obj.get_author(ret_container[1])                    # I wanna get the details of this novel
-# summary = obj.get_summary(ret_container[1])
-print(ret_container[0], ret_container[1])
-obj.crawl_pages('complete', 1)
-
-
-
-

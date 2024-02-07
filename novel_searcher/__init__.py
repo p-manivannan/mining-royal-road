@@ -1,2 +1,2 @@
-from . import sitecrawler
-from . import novelcrawler
+from .sitecrawler import SiteCrawler
+from .novelcrawler import NovelCrawler 
