@@ -4,8 +4,10 @@ from bs4 import SoupStrainer as strainer
 from pprint import pprint
 import regex as re
 from sitecrawler import SiteCrawler
+import time
 
 '''
+Handles information about a single novel.
 Given a novel (either name or URL), NovelCrawler handles
 retrieval and saving to a Mongo database of the following:
     1) Author
@@ -39,20 +41,128 @@ class NovelCrawler():
     '''
     Opens request and returns page as unicode
     '''
-    def init_request(self):
+    def init_request(self, link=None):
+        self.url = link if link is not None else self.url
+        if self.url is None:
+            print('link is empty!\n')
+
         return requests.get(self.url).text
 
-    def get_title_author_summary(self, soup):
-        title_and_author_container = soup.find('div', class_='col')
-        title = title_and_author_container.text.split('by')[0].strip()
-        author = title_and_author_container.text.split('by')[1].strip()
-        summary = soup.find('div', class_='hidden-content').text.strip()
-        return title, author, summary
+    '''
+    Returns base link of RoyalRoad:
+    https://www.royalroad.com
+    '''
+    def get_royalroad_link(self):
+        return 'https://www.royalroad.com'
+    
+    '''
+    Gets information about a novel after having provided
+    a name/URL
+    '''
+    def get_novel_info(self):
+        if self.novel_info:         # If dict has something, return it (assuming it's already filled with the right entries)
+            return self.novel_info
+
+        if not self.novel_info and (self.isName() or self.url is None):
+            print(f"You haven't provided the following: {'a name' if self.name is None else ''}, {'a URL' if self.url is None else ''}")
+            return None
+
+        if not self.novel_info and (self.name is not None and self.url is None):    # If nothing is in dict, but we have a name, search it up and get url
+            self.search_novel(self.name)
+        
+        if not self.novel_info and self.isURL():     # If nothing in dict and there is a URL, retrieve novel info and return it
+            self.retrieve_novel_info()
+            return self.novel_info
+        
+        print(f'Failed to get novel info: {self.name}, {self.url}, {self.novel_info.keys() if self.novel_info is not None else None}')
+        return None
 
     '''
-    Returns a dict containing all relevant statistics in the fiction page
+    In a page containing a list of novels, fiction-title is the h2 class
+    that is common. By filtering a page for this tag, one can find the 
+    title and url of a novel on the page.
+    page the text of a link parsed through requests.get()
     '''
-    def get_stats(self, soup):
+    def get_novel_url_and_name(self, page):
+        fiction_title_element = strainer('h2', attrs={'class': 'fiction-title'})
+        soup = BeautifulSoup(page, features='lxml', parse_only=fiction_title_element)
+        novel = soup.find('a')
+        if novel == None:
+            print('No results were found matching criteria!')
+            return None
+        self.name = novel.text.strip()
+        self.url = novel.attrs['href']
+
+        return self.name, f'{self.get_royalroad_link() + self.url}'
+
+    def isName(self):
+        return True if self.name is not None else False
+
+    def isURL(self):
+        if self.url is None:
+            print('No URL provided!')
+            return False
+        try:
+            page = requests.get(self.url)
+            print(page.status_code)
+            return True
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+            print(f'Error reaching page: {self.url}')
+        
+        return False
+
+    '''
+    Searches a novel by utilizing RoyalRoad's search function
+    and returns a link to it.
+    '''
+    def search_novel(self, name):
+        link = self.get_royalroad_link() + '/fictions/search?title='
+        link += name.replace(' ', '+')
+        page = self.init_request(link)
+        return self.get_novel_url_and_name(page)
+
+    def retrieve_novel_info(self):
+        page = self.init_request()
+        soup = BeautifulSoup(page, features='lxml')
+        self.put_name()
+        self.put_author(soup)
+        self.put_summary(soup)
+        self.put_tags(soup)
+        self.put_stats(soup)
+        self.put_reviews(soup)
+        return None
+        # return self.get_novel_info()        # Danger of endless recursion
+
+    def put_name(self):
+        '''
+        Puts novel name in novel_info as 'novel_name'
+        '''
+        self.novel_info['novel_name'] = self.name if self.name is not None else None
+
+    def put_author(self, soup):
+        '''
+        Puts author in novel_info
+        '''
+        container = soup.find('div', class_='row fic-header').find_next('a')    # Author container
+        self.novel_info['author'] = container.text.strip()
+
+    def put_summary(self, soup):
+        '''
+        Puts summary in novel_info
+        '''
+        container = soup.find('div', class_='description')
+        self.novel_info['summary'] = container.text.strip()
+        
+    def put_tags(self, soup):
+        '''
+        Puts tags in novel_info
+        '''
+        container = soup.find('div', class_='fiction-info').find_next('div', class_='margin-bottom-10').text.strip().split('\n')
+        unwanted = {'', ' '}
+        # Convert tags to lower case in case they change it up later
+        self.novel_info['tags'] = [item.strip().lower() for item in container if item.strip() not in unwanted]
+
+    def put_stats(self, soup):
         stats = {}
         stats['overall_score'] = soup.find('span', {'data-original-title': 'Overall Score'}).attrs['data-content']
         stats['style_score'] = soup.find('span', {'data-original-title': 'Style Score'}).attrs['data-content']
@@ -66,24 +176,8 @@ class NovelCrawler():
         stat_values = [x.text.strip().replace(',', '') for x in numerical_stats[1::2]]
         for idx, key in enumerate(stat_keys):
             stats[key] = stat_values[idx]
-
-        return stats
-        
-    '''
-    Gets genres
-    '''
-    def get_genres(self, soup):
-        genres = []
-        status1 = soup.find('span', 'label label-default label-sm bg-blue-hoki')
-        status2 = status1.find_next('span', 'label label-default label-sm bg-blue-hoki')
-        tags = soup.find('span', 'tags')
-        genres.extend([status1.text.strip().lower(), status2.text.strip().lower()])
-        for tag in tags:
-            text = tag.text.strip().replace(' ', '_').lower()
-            if text != '':
-                genres.append(text)
-        
-        return genres
+        self.novel_info['stats'] = stats
+    
         
 
     '''
@@ -93,8 +187,8 @@ class NovelCrawler():
     Assumes URL is in form:
     https://royalroad.com/fiction/21220/mother-of-learning
     '''
-    def get_reviews(self, soup, temp_url):
-        m_url = temp_url + '?sorting=top&reviews='
+    def put_reviews(self, soup):
+        temp_url = self.url + '?sorting=top&reviews='
         # RETRIEVE NUMBER OF REVIEW PAGES
         ul = soup.find('ul', class_='pagination justify-content-center').find_all('li')
         a = ul[-1].find('a')
@@ -103,7 +197,7 @@ class NovelCrawler():
 
         for n in range(1, n_pages):
             # CREATE LINK TEXT
-            review_url = m_url + str(n)
+            review_url = temp_url + str(n)
             page = requests.get(review_url).text
             soup = BeautifulSoup(page, features='lxml')
             # FIND THE REVIEW CONTAINER
@@ -115,15 +209,15 @@ class NovelCrawler():
                 review = x.find_next('div', class_='review-inner').text.strip()
                 reviews.append({'author' : reviewer, 'review' : review})
 
-        return reviews
+        self.novel_info['reviews'] = reviews
 
 
-    
-
-    
 
 # Testing
 site_crawler = SiteCrawler()
 name, url = site_crawler.search_novel('mother of learning')
 novel_crawler = NovelCrawler(name, url)
+start = time.time()
+novel_crawler.retrieve_novel_info()
+print(f'time taken: {(time.time() - start) / 60}')
     
