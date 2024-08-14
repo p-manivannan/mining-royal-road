@@ -3,21 +3,22 @@ from bs4 import BeautifulSoup
 from bs4 import SoupStrainer as strainer
 from pprint import pprint
 import regex as re
+from database import db_handler
 
 '''
 The following class is used to:
-    1) Search a novel on RoyalRoad by name
-    2) Crawl category pages to get novel names and URLs
-    3) Save entry (novel name and URL) to a field in a database 
+    1) Crawl category pages to get novel names and URLs
+    2) Save entry (novel name and URL) to a field in a database 
+    3) Search a novel on RoyalRoad by name
 '''
 class SiteCrawler:
     def __init__(self):
         self.novel_info = {}
         self.categories = {'best':'https://www.royalroad.com/fictions/best-rated',
                            'trending':'https://www.royalroad.com/fictions/trending',
-                           'ongoing':'https://www.royalroad.com/fictions/active-popular',
+                           'active':'https://www.royalroad.com/fictions/active-popular',
                            'complete':'https://www.royalroad.com/fictions/complete',
-                           'week':'https://www.royalroad.com/fictions/weekly-popular',
+                           'weekly':'https://www.royalroad.com/fictions/weekly-popular',
                            'latest':'https://www.royalroad.com/fictions/latest-updates',
                            'new':'https://www.royalroad.com/fictions/new',
                            'rising':'https://www.royalroad.com/fictions/rising-stars'
@@ -41,18 +42,7 @@ class SiteCrawler:
         else:
             print(f'Your category, "{cat}" was not found!')
             return None
-        return self.categories[category_str]
-        
-    def crawl_pages(self, category, pages):
-        for n in range(1, pages + 1):
-            if n == 1:
-                link = self.get_category_link(category)
-                print(link)
-            else:
-                link = self.get_category_link(category) + f'?page={n}'
-            
-            if link != None:
-                self.crawl_page(link)
+
     
     '''
     In a page containing a list of novels, fiction-title is the h2 class
@@ -81,11 +71,21 @@ class SiteCrawler:
         page = requests.get(link).text
         return self.get_novel_url_and_name(page)
 
-    '''
-    Stores names and URLs of a novel from a page in the class'
-    dictionary. Call the class saving function to dump this
-    dict to a file
-    '''
+
+    def start(self, category, pages):
+        link = None
+        for n in range(1, pages + 1):
+            if n == 1:
+                link = self.get_category_link(category)
+                print(link)
+            else:
+                link = self.get_category_link(category) + f'?page={n}'
+            
+            if link != None:
+                self.crawl_page(link)
+
+        self.save()
+
     def crawl_page(self, link):
         page = self.session.get(link).text
         fiction_title_element = strainer('h2', attrs={"class": "fiction-title"})
@@ -96,3 +96,10 @@ class SiteCrawler:
                 return
             self.novel_info[novel_name] = novel.attrs['href']
         pass
+
+    def save(self):
+        handler = db_handler.dbHandler()
+        handler.insert_name_and_url(self.novel_info)
+
+
+

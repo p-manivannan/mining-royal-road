@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from bs4 import SoupStrainer as strainer
 from pprint import pprint
 import regex as re
-from sitecrawler import SiteCrawler
+from . import SiteCrawler
 import time
 
 '''
@@ -42,11 +42,17 @@ class NovelCrawler():
     Opens request and returns page as unicode
     '''
     def init_request(self, link=None):
+        # Probably gotta verify link if it's actually a link first
         self.url = link if link is not None else self.url
-        if self.url is None:
-            print('link is empty!\n')
+        if self.url is not None:
+            return requests.get(self.url).text
+        
+        if self.name is not None:
+            self.search_novel(self.name)
+            return requests.get(self.url).text
 
-        return requests.get(self.url).text
+        print(f'Name and link not provided!')
+        return None
 
     '''
     Returns base link of RoyalRoad:
@@ -93,7 +99,7 @@ class NovelCrawler():
         self.name = novel.text.strip()
         self.url = novel.attrs['href']
 
-        return self.name, f'{self.get_royalroad_link() + self.url}'
+        return f'{self.get_royalroad_link() + self.url}', self.name, 
 
     def isName(self):
         return True if self.name is not None else False
@@ -111,6 +117,29 @@ class NovelCrawler():
         
         return False
 
+    def get_patreon_link(self):
+        soup = BeautifulSoup(page, features='lxml')
+        container = soup.find('div', class_='dropdown-content')
+        link_container = container.find_all('a')      # In case there is patreon and paypal link, patreon is the last link
+        # Only return if link is patreon
+        for link in link_container:
+            if 'patreon' in link.attrs['href']:
+                return link.attrs['href']
+        
+        return None
+
+    def retrieve_patreon_info(self, link=None):
+        if link is None:
+            print('No patreon link provided')
+            return None
+        # First check if income is already stated
+        # If not, check if there is number of subs
+        # If there is, and there are tiers, get highest and lowest tier
+        # Return None
+        #
+        # tag span, data-tag = patron-count (find first)/creation-count/earnings-count
+        pass
+
     '''
     Searches a novel by utilizing RoyalRoad's search function
     and returns a link to it.
@@ -119,7 +148,7 @@ class NovelCrawler():
         link = self.get_royalroad_link() + '/fictions/search?title='
         link += name.replace(' ', '+')
         page = self.init_request(link)
-        return self.get_novel_url_and_name(page)
+        self.url, self.name = self.get_novel_url_and_name(page)
 
     def retrieve_novel_info(self):
         page = self.init_request()
@@ -202,7 +231,7 @@ class NovelCrawler():
             soup = BeautifulSoup(page, features='lxml')
             # FIND THE REVIEW CONTAINER
             review_container = soup.find('div', class_='portlet light reviews')
-            # LOOP THROUGH ALL REVIEWS
+            # LOOP THROUGH ALL REVIEWS1
             for x in review_container.find_all('div', class_='review'):
                 meta = x.find('div', class_ = 'review-meta')
                 reviewer = meta.find_next('a').text.strip()
@@ -213,11 +242,11 @@ class NovelCrawler():
 
 
 
-# Testing
-site_crawler = SiteCrawler()
-name, url = site_crawler.search_novel('mother of learning')
-novel_crawler = NovelCrawler(name, url)
-start = time.time()
-novel_crawler.retrieve_novel_info()
-print(f'time taken: {(time.time() - start) / 60}')
+# # Testing
+# site_crawler = SiteCrawler()
+# novel_crawler = NovelCrawler(name='Mother of Learning')
+# page = novel_crawler.init_request()
+# novel_crawler.get_patreon_link()
+
+# novel_crawler.retrieve_novel_info()
     
