@@ -1,2 +1,3 @@
 from .sitecrawler import SiteCrawler
-from .novelcrawler import NovelCrawler 
+from .novelscraper import NovelScraper , scrape_novel
+from .novel_crawler import NovelCrawler

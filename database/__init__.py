@@ -1,1 +1,1 @@
-from .db_handler import dbHandler
+from .novels_db import dbHandler

@@ -3,17 +3,23 @@ from bs4 import BeautifulSoup
 from bs4 import SoupStrainer as strainer
 from pprint import pprint
 import regex as re
-from database import db_handler
+from database import dbHandler
 
 '''
 The following class is used to:
     1) Crawl category pages to get novel names and URLs
     2) Save entry (novel name and URL) to a field in a database 
     3) Search a novel on RoyalRoad by name
+
+THE MAIN FUNCTION IS TO CRAWL CATEGORY PAGES
 '''
 class SiteCrawler:
     def __init__(self):
         self.novel_info = {}
+        '''
+        Design flaw: If sitelinks are changed, this breaks. No functionality to check if
+        links are healthy.
+        '''
         self.categories = {'best':'https://www.royalroad.com/fictions/best-rated',
                            'trending':'https://www.royalroad.com/fictions/trending',
                            'active':'https://www.royalroad.com/fictions/active-popular',
@@ -28,6 +34,9 @@ class SiteCrawler:
     '''
     Returns base link of RoyalRoad:
     https://www.royalroad.com
+
+    Design flaw: If royalroad website name changes, then there's lot of 
+    refactoring done. Name of website can be read from config file
     '''
     def get_royalroad_link(self):
         return 'https://www.royalroad.com'
@@ -45,7 +54,7 @@ class SiteCrawler:
 
     
     '''
-    In a page containing a list of novels, fiction-title is the h2 class
+    In THE CATEGORY page containing a list of novels, fiction-title is the h2 class
     that is common. By filtering a page for this tag, one can find the 
     title and url of a novel on the page.
     page the text of a link parsed through requests.get()
@@ -58,9 +67,9 @@ class SiteCrawler:
             print('No results were found matching criteria!')
             return None
         novel_name = novel.text.strip()
-        novel_link = novel.attrs['href']
-        return novel_name, f'{self.get_royalroad_link() + novel_link}'
-
+        novel_link = self.get_royalroad_link() + novel.attrs['href']
+        return novel_name, novel_link
+ 
     '''
     Searches a novel by utilizing RoyalRoad's search function
     and returns a link to it.
@@ -72,6 +81,9 @@ class SiteCrawler:
         return self.get_novel_url_and_name(page)
 
 
+    '''
+    Trending page has only 1 page. So this function doesn't work as intended for that page
+    '''
     def start(self, category, pages):
         link = None
         for n in range(1, pages + 1):
@@ -92,13 +104,11 @@ class SiteCrawler:
         soup = BeautifulSoup(page, features='lxml', parse_only=fiction_title_element)   # parse only fiction-title to save memory and time. It is a unique name
         for idx, novel in enumerate(soup.find_all('a')):
             novel_name = novel.text.strip()
-            if novel.text in self.novel_info:   # Skip duplicates
-                return
-            self.novel_info[novel_name] = novel.attrs['href']
+            self.novel_info[novel_name] = self.get_royalroad_link() + novel.attrs['href']
         pass
 
     def save(self):
-        handler = db_handler.dbHandler()
+        handler = dbHandler()
         handler.insert_name_and_url(self.novel_info)
 
 
