@@ -100,16 +100,40 @@ class dbHandler(DatabaseHandler):
         return self.cursor.fetchall()
 
     def insert_data(self, novel_id: int, dct: dict) -> None:
-        # Validate and set default values
+        # Track if we got valid data or if this is a failed scrape
+        has_valid_scores = False
+        
+        # Validate and set default values for scores
         for key in ['overall_score', 'style_score', 'story_score', 'grammar_score', 'character_score']:
             if key not in dct or dct[key] is None or dct[key] == '':
-                dct[key] = -1.0
+                dct[key] = -1.0  # Default to -1.0 for missing data
             else:
                 try:
                     dct[key] = float(dct[key])
+                    # If any score is valid (>= 0), mark that we have valid data
+                    if dct[key] >= 0:
+                        has_valid_scores = True
                 except ValueError:
                     dct[key] = -1.0
 
+        # Check if all scores are -1.0 - this might indicate a scraping failure
+        # But could also be a brand new novel with no ratings yet
+        all_scores_negative = all(
+            dct.get(key, -1.0) == -1.0 
+            for key in ['overall_score', 'style_score', 'story_score', 'grammar_score', 'character_score']
+        )
+        
+        # If all scores are -1.0 AND we don't have other basic info, it's likely a failed scrape
+        # In this case, we should NOT mark as successfully scraped
+        if all_scores_negative:
+            # Check if we at least got the novel name and author
+            has_basic_info = bool(dct.get('name')) and bool(dct.get('author'))
+            
+            if not has_basic_info:
+                # This looks like a failed scrape - don't update the record
+                logging.warning(f"Novel {novel_id}: Scraping appears to have failed (no basic info). Not updating database.")
+                return
+        
         for key in ['total_views', 'average_views', 'favorites', 'ratings', 'word_count', 'chapter_count']:
             if key not in dct or dct[key] is None or dct[key] == '':
                 dct[key] = 0

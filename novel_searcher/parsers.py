@@ -78,11 +78,15 @@ class RoyalRoadNovelParser(Parser):
             try:
                 tag = soup.find('span', {'data-original-title': title})
                 if tag:
-                    novel_info[score_key] = tag.get('data-content') or tag.attrs.get('data-content')
+                    value = tag.get('data-content') or tag.attrs.get('data-content')
+                    if value is not None and value != '':
+                        novel_info[score_key] = float(value)
+                    else:
+                        novel_info[score_key] = None  # No rating available yet (new novel)
                 else:
-                    novel_info[score_key] = -1.0
+                    novel_info[score_key] = None  # No rating available yet (new novel)
             except Exception:
-                novel_info[score_key] = -1.0
+                novel_info[score_key] = None  # Parsing error - let insert_data handle defaults
 
         # Numerical stats (views, ratings, favorites, etc.)
         # Usually format in Royal Road is: ['col-sm-6'][1] contains <li> elements with key/values
