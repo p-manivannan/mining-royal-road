@@ -201,9 +201,14 @@ class dbHandler(DatabaseHandler):
         self.cursor.execute('SELECT novel_id, novel_url, is_deleted FROM novels')
         return self.cursor.fetchall()
 
+    def get_deleted_novels(self) -> List[Tuple[int, str]]:
+        """Get all novels marked as deleted."""
+        self.cursor.execute('SELECT novel_id, novel_url FROM novels WHERE is_deleted = 1')
+        return self.cursor.fetchall()
+
     def cleanup_deleted_novels(self, http_client=None) -> Tuple[int, int]:
         """
-        Check all novels marked as deleted or not scraped to verify if they still exist.
+        Check all novels marked as deleted to verify if they still exist.
         Permanently removes novels that return a 404 'deleted' page.
         
         Returns:
@@ -213,13 +218,12 @@ class dbHandler(DatabaseHandler):
         from bs4 import BeautifulSoup
         
         client = http_client or RequestsHTTPClient()
-        all_novels = self.get_all_novels()
+        deleted_novels = self.get_deleted_novels()
         
         checked_count = 0
         deleted_count = 0
         
-        for novel_id, novel_url, is_deleted in all_novels:
-            # Check both deleted novels and unsraped novels that might be deleted
+        for novel_id, novel_url in deleted_novels:
             try:
                 html = client.get(novel_url)
                 if html:
@@ -227,6 +231,7 @@ class dbHandler(DatabaseHandler):
                     title_tag = soup.find('title')
                     if title_tag:
                         title_text = title_tag.text.strip().lower()
+                        # Only delete if title contains "not found" (Royal Road's custom 404 page)
                         if "not found" in title_text:
                             # Novel is confirmed deleted, permanently remove it
                             self.permanently_delete_novel(novel_id)
@@ -239,6 +244,7 @@ class dbHandler(DatabaseHandler):
                     logging.info(f"Permanently deleted novel {novel_id} ({novel_url}) - no response")
             except Exception as e:
                 logging.warning(f"Error checking novel {novel_id} ({novel_url}): {e}")
+                # Don't delete on error - might be temporary network issue
             
             checked_count += 1
         

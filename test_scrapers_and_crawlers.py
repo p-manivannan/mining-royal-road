@@ -226,31 +226,71 @@ class TestScrapersAndCrawlers(unittest.TestCase):
         </html>
         """
         
+        # Also insert an active novel that should NOT be cleaned up
+        active_html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Active Novel - Royal Road</title>
+        </head>
+        <body>
+            <h1>Novel Content</h1>
+        </body>
+        </html>
+        """
+        
         deleted_url = "http://example.com/deleted-novel"
+        active_url = "http://example.com/active-novel"
+        
+        # Insert deleted novel (is_deleted=1)
         self.db.cursor.execute(
-            "INSERT OR IGNORE INTO novels (novel_name, novel_url, is_scraped, is_deleted) VALUES (?, ?, 0, 0)",
+            "INSERT INTO novels (novel_name, novel_url, is_scraped, is_deleted) VALUES (?, ?, 0, 1)",
             ("To Be Cleaned", deleted_url)
+        )
+        # Insert active novel (is_deleted=0) - should NOT be touched by cleanup
+        self.db.cursor.execute(
+            "INSERT INTO novels (novel_name, novel_url, is_scraped, is_deleted) VALUES (?, ?, 0, 0)",
+            ("Should Not Be Cleaned", active_url)
         )
         self.db.save()
         
-        # Get novel_id before cleanup
+        # Get novel_ids before cleanup
         self.db.cursor.execute("SELECT novel_id FROM novels WHERE novel_url = ?", (deleted_url,))
         result = self.db.cursor.fetchone()
         self.assertIsNotNone(result)
-        novel_id = result[0]
+        deleted_novel_id = result[0]
         
-        # Create mock HTTP client that returns deleted page HTML
+        self.db.cursor.execute("SELECT novel_id FROM novels WHERE novel_url = ?", (active_url,))
+        result = self.db.cursor.fetchone()
+        self.assertIsNotNone(result)
+        active_novel_id = result[0]
+        
+        # Create mock HTTP client that returns different HTML for different URLs
         mock_client = Mock()
-        mock_client.get.return_value = deleted_html
+        def mock_get(url):
+            if url == deleted_url:
+                return deleted_html
+            elif url == active_url:
+                return active_html
+            return None
+        
+        mock_client.get.side_effect = mock_get
         
         # Run cleanup with mock client
         checked, deleted = self.db.cleanup_deleted_novels(http_client=mock_client)
         
-        # Verify the novel was permanently deleted
-        self.db.cursor.execute("SELECT COUNT(*) FROM novels WHERE novel_id = ?", (novel_id,))
+        # Verify the deleted novel was permanently deleted
+        self.db.cursor.execute("SELECT COUNT(*) FROM novels WHERE novel_id = ?", (deleted_novel_id,))
         count = self.db.cursor.fetchone()[0]
-        self.assertEqual(count, 0, "Novel should be permanently deleted")
-        print(f"Cleanup successfully permanently deleted novel {novel_id}")
+        self.assertEqual(count, 0, "Deleted novel should be permanently deleted")
+        print(f"Cleanup successfully permanently deleted novel {deleted_novel_id}")
+        
+        # Verify the active novel still exists
+        self.db.cursor.execute("SELECT COUNT(*) FROM novels WHERE novel_id = ?", (active_novel_id,))
+        count = self.db.cursor.fetchone()[0]
+        self.assertEqual(count, 1, "Active novel should still exist")
+        print(f"Active novel {active_novel_id} correctly preserved")
+        
         print(f"Cleanup checked {checked} novels and permanently deleted {deleted}")
 
 
