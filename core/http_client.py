@@ -18,7 +18,7 @@ class RequestsHTTPClient(HTTPClient):
         try:
             self.logger.info(f"Fetching URL: {url}")
             response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()
+            # Return HTML even for error status codes (like 404 custom pages)
             return response.text
         except requests.RequestException as e:
             self.logger.error(f"Error fetching URL {url}: {e}")

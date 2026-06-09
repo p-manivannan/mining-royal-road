@@ -4,6 +4,7 @@ from core.base_crawler import BaseCrawler, WriteCounter
 from core.interfaces import DatabaseHandler, Scraper
 from database.novels_db import dbHandler
 from review_crawler.review_scraper import RoyalRoadReviewScraper
+from utils.custom_exceptions import NovelDeleted
 
 class ReviewCrawler(BaseCrawler):
     def __init__(self, db_handler: DatabaseHandler = None, scraper: Scraper = None):
@@ -50,6 +51,9 @@ class ReviewCrawler(BaseCrawler):
                         try:
                             reviews = future.result()
                             self.db_handler.insert_reviews(novel_id, reviews)
+                        except NovelDeleted:
+                            self.logger.warning(f"Novel {novel_id} ({url}) has been deleted. Marking in DB.")
+                            self.db_handler.set_novel_as_deleted(novel_id)
                         except Exception as e:
                             self.logger.error(f"Error processing novel_id {novel_id}: {e}")
                             
