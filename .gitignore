@@ -1,1 +1,1 @@
-Nothing should be ignored since the changes only include source files (.py) without any build artifacts, dependencies, or temporary files.
+Nothing needs to be added to .gitignore since only a markdown file (PROCESS_FLOW.md) was added, which is a source/config file and not a build artifact, dependency, or temporary file.
