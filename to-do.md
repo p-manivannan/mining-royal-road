@@ -1,3 +1,10 @@
+# Status
+- Patreon scraping TBA later
+
+# Immediate to-do:
+- REFACTORING TO SOLID PRINCIPLES COMPLETED (100%)
+
+        
 # To-Do:
 
 - I can store JSONs in a PostgreSQL database. So I can just put all reviews into a JSON file and put it as JSON field

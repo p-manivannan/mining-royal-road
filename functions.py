@@ -17,6 +17,7 @@ punctuation = list(punctuation)
 the following function was obtained from user svenwildermann on stackoverflow:
 https://stackoverflow.com/questions/23241641/how-to-ignore-empty-lines-while-using-next-sibling-in-beautifulsoup4-in-python
 '''
+
 def bs_preprocess(html):
     """remove distracting whitespaces and newline characters"""
     pat = re.compile('(^[\s]+)|([\s]+$)', re.MULTILINE)

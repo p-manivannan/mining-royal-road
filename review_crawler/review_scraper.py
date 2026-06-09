@@ -1,56 +1,46 @@
-import requests
-from bs4 import BeautifulSoup
-from pprint import pprint
-import time
+from core.interfaces import Scraper
+from typing import List, Dict, Any
 
-'''
-Methods to scrape a single novel's reviews.
-I've made it functional instead of a class
-so that I can use Threads 
-'''
+def scrape_reviews(url: str) -> List[Dict[str, Any]]:
+    from core.http_client import RequestsHTTPClient
+    from review_crawler.parsers import RoyalRoadReviewParser
+    
+    client = RequestsHTTPClient()
+    parser = RoyalRoadReviewParser()
+    scraper = RoyalRoadReviewScraper(client, parser)
+    return scraper.scrape(url)
 
-'''
-Opens connection to a novel page
-'''
-def init_request(link):
-    if link is not None:
-        return requests.get(link).text
-    else:
-        ValueError("Link is none!")
+class RoyalRoadReviewScraper(Scraper):
+    def __init__(self, http_client=None, parser=None):
+        from core.http_client import RequestsHTTPClient
+        from review_crawler.parsers import RoyalRoadReviewParser
+        
+        self.http_client = http_client or RequestsHTTPClient()
+        self.parser = parser or RoyalRoadReviewParser()
 
-
-'''
-Pass this function to ThreadPoolExecutor
-'''
-def scrape_reviews(url):
-    page = init_request(url)
-    soup = BeautifulSoup(page, features='lxml')
-    return put_reviews(url, soup)
-
-def put_reviews(url, soup):
-    temp_url = url + '?sorting=top&reviews='
-    # RETRIEVE NUMBER OF REVIEW PAGES
-    ul = soup.find('ul', class_='pagination justify-content-center').find_all('li')
-    a = ul[-1].find('a')
-    n_pages = int(a.attrs['data-page'])
-    reviews = []
-
-    for n in range(1, n_pages):
-        # CREATE LINK TEXT
-        review_url = temp_url + str(n)
-        page = requests.get(review_url).text
-        soup = BeautifulSoup(page, features='lxml')
-        # FIND THE REVIEW CONTAINER
-        review_container = soup.find('div', class_='portlet light reviews')
-        # LOOP THROUGH ALL REVIEWS1
-        for x in review_container.find_all('div', class_='review'):
-            meta = x.find('div', class_ = 'review-meta')
-            reviewer = meta.find_next('a').text.strip()
-            review = x.find_next('div', class_='review-inner').text.strip()
-            # Find score
-            meta = x.find('div', {'aria-label' : 'Overall Score'})
-            target = meta.find_next_sibling('div')
-            overall_score = float(target.attrs['aria-label'].split(' ')[0])
-            reviews.append({'author' : reviewer, 'review' : review, 'score' : overall_score})
-
-    return reviews
+    def scrape(self, url: str) -> List[Dict[str, Any]]:
+        """
+        Scrapes all reviews for a given novel URL page-by-page.
+        """
+        # First page contains the initial reviews and pagination info
+        html = self.http_client.get(url)
+        if not html:
+            return []
+            
+        reviews = self.parser.parse(html)
+        num_pages = self.parser.parse_num_pages(html)
+        
+        if num_pages > 1:
+            base_review_url = url.rstrip('/') + '?sorting=top&reviews='
+            for page in range(2, num_pages + 1):
+                try:
+                    page_url = f"{base_review_url}{page}"
+                    page_html = self.http_client.get(page_url)
+                    if page_html:
+                        page_reviews = self.parser.parse(page_html)
+                        reviews.extend(page_reviews)
+                except Exception:
+                    # If one page fails, continue scraping the others
+                    continue
+                    
+        return reviews
