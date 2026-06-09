@@ -1,5 +1,6 @@
 from core.interfaces import Scraper
 from typing import List, Dict, Any
+from utils.custom_exceptions import NovelDeleted
 
 def scrape_reviews(url: str) -> List[Dict[str, Any]]:
     from core.http_client import RequestsHTTPClient
@@ -21,12 +22,23 @@ class RoyalRoadReviewScraper(Scraper):
     def scrape(self, url: str) -> List[Dict[str, Any]]:
         """
         Scrapes all reviews for a given novel URL page-by-page.
+        Raises NovelDeleted exception if the novel page indicates deletion.
         """
+        from bs4 import BeautifulSoup
+        
         # First page contains the initial reviews and pagination info
         html = self.http_client.get(url)
         if not html:
-            return []
-            
+            raise NovelDeleted("No response from novel page")
+        
+        # Check for deleted/not found title
+        soup = BeautifulSoup(html, 'lxml')
+        title_tag = soup.find('title')
+        if title_tag:
+            title_text = title_tag.text.strip().lower()
+            if "not found" in title_text:
+                raise NovelDeleted()
+        
         reviews = self.parser.parse(html)
         num_pages = self.parser.parse_num_pages(html)
         

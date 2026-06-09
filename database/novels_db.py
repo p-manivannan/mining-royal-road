@@ -190,6 +190,61 @@ class dbHandler(DatabaseHandler):
         self.cursor.execute(query, (novel_id,))
         self.save()
 
+    def permanently_delete_novel(self, novel_id: int) -> None:
+        """Permanently remove a novel and its associated data from the database."""
+        # Due to ON DELETE CASCADE, deleting from novels will remove related tags and reviews
+        self.cursor.execute('DELETE FROM novels WHERE novel_id = ?', (novel_id,))
+        self.save()
+
+    def get_all_novels(self) -> List[Tuple[int, str, int]]:
+        """Get all novels with their id, url, and deleted status."""
+        self.cursor.execute('SELECT novel_id, novel_url, is_deleted FROM novels')
+        return self.cursor.fetchall()
+
+    def cleanup_deleted_novels(self, http_client=None) -> Tuple[int, int]:
+        """
+        Check all novels marked as deleted or not scraped to verify if they still exist.
+        Permanently removes novels that return a 404 'deleted' page.
+        
+        Returns:
+            Tuple of (number checked, number permanently deleted)
+        """
+        from core.http_client import RequestsHTTPClient
+        from bs4 import BeautifulSoup
+        
+        client = http_client or RequestsHTTPClient()
+        all_novels = self.get_all_novels()
+        
+        checked_count = 0
+        deleted_count = 0
+        
+        for novel_id, novel_url, is_deleted in all_novels:
+            # Check both deleted novels and unsraped novels that might be deleted
+            try:
+                html = client.get(novel_url)
+                if html:
+                    soup = BeautifulSoup(html, 'lxml')
+                    title_tag = soup.find('title')
+                    if title_tag:
+                        title_text = title_tag.text.strip().lower()
+                        if "not found" in title_text:
+                            # Novel is confirmed deleted, permanently remove it
+                            self.permanently_delete_novel(novel_id)
+                            deleted_count += 1
+                            logging.info(f"Permanently deleted novel {novel_id} ({novel_url}) - confirmed 404")
+                else:
+                    # If no HTML returned, treat as deleted
+                    self.permanently_delete_novel(novel_id)
+                    deleted_count += 1
+                    logging.info(f"Permanently deleted novel {novel_id} ({novel_url}) - no response")
+            except Exception as e:
+                logging.warning(f"Error checking novel {novel_id} ({novel_url}): {e}")
+            
+            checked_count += 1
+        
+        logging.info(f"Cleanup complete: checked {checked_count} novels, permanently deleted {deleted_count}")
+        return (checked_count, deleted_count)
+
     def get_num_novels_no_reviews(self) -> int:
         self.cursor.execute('''SELECT COUNT(novel_id)
                                 FROM novels
