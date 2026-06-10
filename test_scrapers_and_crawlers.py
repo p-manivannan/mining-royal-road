@@ -8,7 +8,7 @@ from novel_searcher.novelscraper import NovelScraper
 from novel_searcher.novel_crawler import NovelCrawler
 from review_crawler.review_scraper import RoyalRoadReviewScraper
 from review_crawler.review_crawler import ReviewCrawler
-from utils.custom_exceptions import NovelDeleted
+from core.custom_exceptions import NovelDeleted
 
 class TestScrapersAndCrawlers(unittest.TestCase):
     @classmethod

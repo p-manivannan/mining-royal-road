@@ -1,11 +1,13 @@
-# Status
-- Patreon scraping TBA later
+# Barebones To-Do:
+This section is for immediate plan of action with the goal of completing the Data Science aspect with the bare minimum data needed.
+1. Fix ratings retrieval
+2. Re-scrape existing novels in DB
+3. Scrape newly updated 
+4. Move to DB
 
-# Immediate to-do:
-- REFACTORING TO SOLID PRINCIPLES COMPLETED (100%)
-
-        
-# To-Do:
-
-- I can store JSONs in a PostgreSQL database. So I can just put all reviews into a JSON file and put it as JSON field
-- Everytime I call a row, I don't want to call ALL the reviews of a novel because data analysis pipeline is separate from the NLP pipeline. Maybe I can separate the two and link them somehow
+# Desirable To-Do:
+If more time could be dedicated to this project, these are the features I would modify/tweak/extend.
+## Patreon Scraping
+- Extend patreon scraping to retrieve all tiers instead of just lower and higher tiers. Involves modifying database schema. 
+- Have another field in database that marks the most popular tier if present. Purpose: Can make more accurate guesstimates of author income.
+- Some pages like "https://www.patreon.com/cw/Macronomicon" have public income data right in the front page. Scrape that and put it in the database whenever present.

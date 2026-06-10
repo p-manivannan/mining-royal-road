@@ -1,5 +1,5 @@
 from core.interfaces import Scraper
-from utils.custom_exceptions import NovelDeleted
+from core.custom_exceptions import NovelDeleted
 
 def scrape_novel(url):
     from core.http_client import RequestsHTTPClient

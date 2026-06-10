@@ -5,7 +5,7 @@ from core.base_crawler import BaseCrawler, WriteCounter
 from core.interfaces import DatabaseHandler, Scraper
 from database.novels_db import dbHandler
 from novel_searcher.novelscraper import NovelScraper
-from utils.custom_exceptions import NovelDeleted
+from core.custom_exceptions import NovelDeleted
 
 class NovelCrawler(BaseCrawler):
     def __init__(self, db_handler: DatabaseHandler = None, scraper: Scraper = None):

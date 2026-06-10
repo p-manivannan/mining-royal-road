@@ -1,6 +1,6 @@
 from core.interfaces import Scraper
 from typing import List, Dict, Any
-from utils.custom_exceptions import NovelDeleted
+from core.custom_exceptions import NovelDeleted
 
 def scrape_reviews(url: str) -> List[Dict[str, Any]]:
     from core.http_client import RequestsHTTPClient
