@@ -1,14 +1,6 @@
 from core.interfaces import Scraper
 from core.custom_exceptions import NovelDeleted
 
-def scrape_novel(url):
-    from core.http_client import RequestsHTTPClient
-    from novel_searcher.parsers import RoyalRoadNovelParser
-    
-    client = RequestsHTTPClient()
-    parser = RoyalRoadNovelParser()
-    scraper = NovelScraper(client, parser)
-    return scraper.scrape(url)
 
 class NovelScraper(Scraper):
     def __init__(self, http_client=None, parser=None, url=None):
@@ -67,30 +59,5 @@ class NovelScraper(Scraper):
 
         return info
 
-    def scrape_novel_info(self):
-        """Legacy compatibility method."""
-        if self.page:
-            self.novel_info = self.parser.parse(self.page)
-            patreon_url = self.novel_info.get('patreon_url')
-            if patreon_url and patreon_url != 'None':
-                try:
-                    from utils.patreon_scraper import scrape_patreon
-                    patreon_info = scrape_patreon(patreon_url)
-                    self.novel_info['patreon_lowest_tier'] = patreon_info.get('lowest_tier_price')
-                    self.novel_info['patreon_highest_tier'] = patreon_info.get('highest_tier_price')
-                    self.novel_info['patreon_subs'] = patreon_info.get('subscribers')
-                    self.novel_info['patreon_name'] = patreon_info.get('name')
-                except Exception:
-                    pass
-
-    def get_novel_info(self):
-        """Legacy compatibility method."""
-        if bool(self.novel_info):
-            return self.novel_info
-        if self.url is None:
-            raise ValueError("No URL provided!")
-        self.page = self.http_client.get(self.url)
-        self.scrape_novel_info()
-        return self.novel_info
 
         

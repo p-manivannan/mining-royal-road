@@ -98,18 +98,25 @@ class dbHandler(DatabaseHandler):
         query += f' ORDER BY novel_id ASC LIMIT {limit}'
         self.cursor.execute(query)
         return self.cursor.fetchall()
-
-    def insert_data(self, novel_id: int, dct: dict) -> None:
+    
+    # Helper function created to separate score retrieval. This was done to fix incorrectly saved ratings
+    # in the DB as initial run collected 9000 entries with broken scores for all.
+    def put_scores(self, dct: dict) -> dict:
         # Validate and set default values
         for key in ['overall_score', 'style_score', 'story_score', 'grammar_score', 'character_score']:
             if key not in dct or dct[key] is None or dct[key] == '':
                 dct[key] = -1.0
             else:
                 try:
-                    dct[key] = float(dct[key])
+                    dct[key] = str(dct[key])
                 except ValueError:
                     dct[key] = -1.0
+        
+        return dct
 
+
+    def insert_data(self, novel_id: int, dct: dict) -> None:
+        dct = self.put_scores(dct)
         for key in ['total_views', 'average_views', 'favorites', 'ratings', 'word_count', 'chapter_count']:
             if key not in dct or dct[key] is None or dct[key] == '':
                 dct[key] = 0

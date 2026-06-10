@@ -53,6 +53,7 @@ class TestScrapersAndCrawlers(unittest.TestCase):
         print(f"Scraped Author: {info.get('author')}")
         print(f"Word Count: {info.get('word_count')}")
         print(f"Chapter Count: {info.get('chapter_count')}")
+        print(f"Ratings: {info.get('chapter_count')}")
         print(f"Patreon URL: {info.get('patreon_url')}")
         print(f"Patreon Name: {info.get('patreon_name')}")
         print(f"Patreon Lowest Tier: {info.get('patreon_lowest_tier')}")
@@ -62,6 +63,7 @@ class TestScrapersAndCrawlers(unittest.TestCase):
         self.assertEqual(info.get('author'), "nobody103")
         self.assertGreater(info.get('word_count', 0), 100000)
         self.assertGreater(info.get('chapter_count', 0), 100)
+
 
     def test_3_novel_crawler(self):
         print("\n--- Testing NovelCrawler (Details Crawler) ---")
