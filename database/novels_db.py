@@ -285,6 +285,44 @@ class dbHandler(DatabaseHandler):
         self.cursor.execute("UPDATE novels SET are_reviews_obtained = 1 WHERE novel_id = ?", [novel_id])
         self.save()
 
+    def update_scores_only(self, novel_id: int, scores: Dict[str, float]) -> None:
+        """
+        Update ONLY the score fields for a novel, leaving all other data untouched.
+        
+        Args:
+            novel_id: The ID of the novel to update
+            scores: Dictionary containing score values with keys:
+                    overall_score, style_score, story_score, grammar_score, character_score
+        """
+        # Validate and set default values for scores
+        score_keys = ['overall_score', 'style_score', 'story_score', 'grammar_score', 'character_score']
+        for key in score_keys:
+            if key not in scores or scores[key] is None or scores[key] == '':
+                scores[key] = -1.0
+            else:
+                try:
+                    scores[key] = float(scores[key])
+                except (ValueError, TypeError):
+                    scores[key] = -1.0
+        
+        query = '''UPDATE novels 
+                   SET overall_score = ?, 
+                       style_score = ?, 
+                       story_score = ?, 
+                       grammar_score = ?, 
+                       character_score = ?
+                   WHERE novel_id = ?'''
+        
+        self.cursor.execute(query, [
+            scores['overall_score'],
+            scores['style_score'],
+            scores['story_score'],
+            scores['grammar_score'],
+            scores['character_score'],
+            novel_id
+        ])
+        self.save()
+
     def print(self):
         self.cursor.execute('SELECT * FROM novels')
         rows = self.cursor.fetchall()
