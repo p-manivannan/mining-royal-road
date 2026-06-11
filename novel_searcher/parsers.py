@@ -70,19 +70,30 @@ class RoyalRoadNovelParser(Parser):
                 novel_info['tags'] = []
         except Exception:
             novel_info['tags'] = []
-
+        
         # Scores
-        scores = ['overall_score', 'style_score', 'story_score', 'grammar_score', 'character_score']
-        score_titles = ['Overall Score', 'Style Score', 'Story Score', 'Grammar Score', 'Character Score']
-        for score_key, title in zip(scores, score_titles):
+        score_mappings = [
+            ('overall_score', 'Overall Score'),
+            ('style_score', 'Style Score'),
+            ('story_score', 'Story Score'),
+            ('grammar_score', 'Grammar Score'),
+            ('character_score', 'Character Score')
+        ]
+
+        for score_key, title in score_mappings:
             try:
                 tag = soup.find('span', {'data-original-title': title})
                 if tag:
-                    novel_info[score_key] = tag.get('data-content') or tag.attrs.get('data-content')
+                    value = tag.get('data-content') or tag.attrs.get('data-content')
+                    if value is not None:
+                        # Store score as string (e.g., "4.5 / 5")
+                        novel_info[score_key] = str(value).strip()
+                    else:
+                        novel_info[score_key] = "-1"
                 else:
-                    novel_info[score_key] = -1.0
+                    novel_info[score_key] = "-1"
             except Exception:
-                novel_info[score_key] = -1.0
+                novel_info[score_key] = "-1"
 
         # Numerical stats (views, ratings, favorites, etc.)
         # Usually format in Royal Road is: ['col-sm-6'][1] contains <li> elements with key/values

@@ -105,12 +105,12 @@ class dbHandler(DatabaseHandler):
         # Validate and set default values
         for key in ['overall_score', 'style_score', 'story_score', 'grammar_score', 'character_score']:
             if key not in dct or dct[key] is None or dct[key] == '':
-                dct[key] = -1.0
+                dct[key] = "-1"
             else:
                 try:
-                    dct[key] = str(dct[key])
-                except ValueError:
-                    dct[key] = -1.0
+                    dct[key] = str(dct[key]).strip()
+                except (ValueError, TypeError):
+                    dct[key] = "-1"
         
         return dct
 
@@ -285,34 +285,35 @@ class dbHandler(DatabaseHandler):
         self.cursor.execute("UPDATE novels SET are_reviews_obtained = 1 WHERE novel_id = ?", [novel_id])
         self.save()
 
-    def update_scores_only(self, novel_id: int, scores: Dict[str, float]) -> None:
+    def update_scores_only(self, novel_id: int, scores: Dict[str, str]) -> None:
         """
         Update ONLY the score fields for a novel, leaving all other data untouched.
-        
+
         Args:
             novel_id: The ID of the novel to update
-            scores: Dictionary containing score values with keys:
+            scores: Dictionary containing score values as strings (e.g., "4.5 / 5") with keys:
                     overall_score, style_score, story_score, grammar_score, character_score
         """
-        # Validate and set default values for scores
+        # Validate and set default values for scores (as strings)
         score_keys = ['overall_score', 'style_score', 'story_score', 'grammar_score', 'character_score']
         for key in score_keys:
             if key not in scores or scores[key] is None or scores[key] == '':
-                scores[key] = -1.0
+                scores[key] = "-1"
             else:
+                # Keep as string, but validate it's a proper string value
                 try:
-                    scores[key] = float(scores[key])
+                    scores[key] = str(scores[key]).strip()
                 except (ValueError, TypeError):
-                    scores[key] = -1.0
-        
-        query = '''UPDATE novels 
-                   SET overall_score = ?, 
-                       style_score = ?, 
-                       story_score = ?, 
-                       grammar_score = ?, 
+                    scores[key] = "-1"
+
+        query = '''UPDATE novels
+                   SET overall_score = ?,
+                       style_score = ?,
+                       story_score = ?,
+                       grammar_score = ?,
                        character_score = ?
                    WHERE novel_id = ?'''
-        
+
         self.cursor.execute(query, [
             scores['overall_score'],
             scores['style_score'],
@@ -322,6 +323,8 @@ class dbHandler(DatabaseHandler):
             novel_id
         ])
         self.save()
+
+
 
     def print(self):
         self.cursor.execute('SELECT * FROM novels')
