@@ -1,4 +1,4 @@
-# Barebones To-Do:
+# Immediate To-Do:
 This section is for immediate plan of action with the goal of completing the Data Science aspect with the bare minimum data needed.
 1. Fix ratings retrieval
 2. Re-scrape existing novels in DB

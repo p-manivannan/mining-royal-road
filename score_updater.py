@@ -47,7 +47,7 @@ class ScoreParser(Parser):
                     value = tag.get('data-content') or tag.attrs.get('data-content')
                     if value is not None:
                         try:
-                            scores[score_key] = float(value)
+                            scores[score_key] = str(value)
                         except (ValueError, TypeError):
                             scores[score_key] = -1.0
                     else:
