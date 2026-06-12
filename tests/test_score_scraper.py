@@ -11,7 +11,7 @@ import sqlite3
 import unittest
 from unittest.mock import Mock, patch, MagicMock
 from database.novels_db import dbHandler
-from score_updater import ScoreParser, ScoreScraper, ScoreCrawler, update_scores_only
+from utils.score_updater import ScoreParser, ScoreScraper, ScoreCrawler, update_scores_only
 from core.custom_exceptions import NovelDeleted
 
 
