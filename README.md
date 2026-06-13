@@ -53,6 +53,16 @@ descriptive questions, such as:
 - Common words or themes in summaries and reviews
 - Differences between novels appearing in different ranking categories
 
+Additionally, the following useful topic can be explored:
+
+  **Novel Hook Generator/Rater**: The hook of a webnovel is very important in enticing a reader
+   towards clicking on and reading the story. At a glance, the current market seems saturated
+   with hooks and finding unique hooks remains a challenge.
+
+Such an extension however, would require scraping of the first X chapters of the novel
+which is ethically questionable. This question can be answered rudimentarily through
+relying solely on the novel's summary and title. 
+
 These are descriptions of the observed snapshot. They should not be treated as
 evidence that a feature causes success, nor as a sound basis for predicting which
 authors or novels will succeed.
@@ -80,7 +90,7 @@ long-running collection system.
 
 ## A More Responsible Future Design
 
-If this project is revived, the collection system woudl likely be redesigned before
+If this project is revived, the collection system woud likely be redesigned before
 more data is gathered:
 
 1. **Check permission first.** Review the site's current terms, `robots.txt`, and
@@ -123,6 +133,18 @@ crawl_log           Request status, retries, timing, and collection provenance
 
 This design would make growth rates, ranking transitions, time-to-success, and
 survival-style analysis possible without performing a full-site crawl every day.
+
+## Future Questions to Answer
+If the above implementations are carried out, further interesting questions can be answered
+and explored such as:
+
+1. **Breakout Webnovel Predictor**: Given a novel's cover image, title, summary, tags and
+   first X chapters, what is the confidence of said novel achieving breakout status (defined by
+   reaching within the top N places within the rising stars list).
+2. **Detailed Study into Reader Engagement**: Modelling long-term trends in reader engagement and
+   short-term trends would be very useful for both authors and the platform to ascertain areas
+   of focus and improvement.
+
 
 ## Running the Existing Code
 
