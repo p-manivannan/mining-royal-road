@@ -1,6 +1,6 @@
 # Mining Royal Road
 
-> **Project status: abandoned / archived**
+> **Project status: incomplete / archived**
 
 This project scrapes public novel data from [Royal Road](https://www.royalroad.com/)
 and stores it in a SQLite database for analysis. It was originally intended to
